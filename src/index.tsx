@@ -420,7 +420,7 @@ function Root({
 
     onClose?.(preventClose);
 
-    if (shouldClose) {
+    if (shouldClose.current === true) {
       set(drawerRef.current, {
         transform: isVertical(direction)
           ? `translate3d(0, ${direction === 'bottom' ? '100%' : '-100%'}, 0)`
