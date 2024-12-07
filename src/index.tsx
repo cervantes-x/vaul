@@ -97,7 +97,7 @@ export type DialogProps = {
    */
   modal?: boolean;
   nested?: boolean;
-  onClose?: () => void;
+  onClose?: (preventClose?: () => void) => void;
   /**
    * Direction of the drawer. Can be `top` or `bottom`, `left`, `right`.
    * @default 'bottom'
@@ -210,6 +210,7 @@ export function Root({
   const shouldAnimate = React.useRef(!defaultOpen);
   const previousDiffFromInitial = React.useRef(0);
   const drawerRef = React.useRef<HTMLDivElement>(null);
+  const shouldClose = React.useRef(true);
   const drawerHeightRef = React.useRef(drawerRef.current?.getBoundingClientRect().height || 0);
   const drawerWidthRef = React.useRef(drawerRef.current?.getBoundingClientRect().width || 0);
   const initialDrawerHeight = React.useRef(0);
@@ -532,13 +533,19 @@ export function Root({
     window.visualViewport?.addEventListener('resize', onVisualViewportChange);
     return () => window.visualViewport?.removeEventListener('resize', onVisualViewportChange);
   }, [activeSnapPointIndex, snapPoints, snapPointsOffset]);
-
+  function preventClose() {
+    shouldClose.current = false;
+  }
   function closeDrawer(fromWithin?: boolean) {
     cancelDrag();
-    onClose?.();
+    onClose?.(preventClose);
 
     if (!fromWithin) {
-      setIsOpen(false);
+      if (shouldClose.current === false) {
+        resetDrawer();
+      } else {
+        setIsOpen(false);
+      }
     }
 
     setTimeout(() => {
@@ -688,7 +695,9 @@ export function Root({
 
     set(drawerRef.current, {
       transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(',')})`,
-      transform: isVertical(direction) ? `scale(${scale}) translate3d(0, ${initialTranslate}px, 0)` : `scale(${scale}) translate3d(${initialTranslate}, 0, 0)`,
+      transform: isVertical(direction)
+        ? `scale(${scale}) translate3d(0, ${initialTranslate}px, 0)`
+        : `scale(${scale}) translate3d(${initialTranslate}, 0, 0)`,
     });
 
     if (!o && drawerRef.current) {
